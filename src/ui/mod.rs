@@ -271,7 +271,8 @@ fn create_view<Item, Model, RowData, ViewMode>(
         )).expect("Failed to create model");
     let selection_model = SingleSelection::new(Some(model.clone()));
     let factory = SignalListItemFactory::new();
-    factory.connect_setup(move |_, list_item| {
+    factory.connect_setup(move |_, list_item: &Object| {
+        let list_item = list_item.downcast_ref::<gtk::ListItem>().unwrap();
         let widget = ItemWidget::new();
         list_item.set_child(Some(&widget));
     });
@@ -365,9 +366,14 @@ fn create_view<Item, Model, RowData, ViewMode>(
 
         Ok(())
     };
-    factory.connect_bind(move |_, item| display_error(bind(item)));
-    factory.connect_unbind(move |_, item| display_error(unbind(item)));
-
+    factory.connect_bind(move |_, item: &Object| {
+        let item = item.downcast_ref::<gtk::ListItem>().unwrap();
+        display_error(bind(item))
+    });
+    factory.connect_unbind(move |_, item: &Object| {
+        let item = item.downcast_ref::<gtk::ListItem>().unwrap();
+        display_error(unbind(item));
+    });
     let view = ColumnView::new(Some(selection_model.clone()));
     let column = ColumnViewColumn::new(Some(title), Some(factory));
     view.append_column(&column);
@@ -376,7 +382,8 @@ fn create_view<Item, Model, RowData, ViewMode>(
     if Model::HAS_TIMES {
         let model = model.clone();
         let factory = SignalListItemFactory::new();
-        factory.connect_setup(move |_, list_item| {
+        factory.connect_setup(move |_, list_item: &Object| {
+            let list_item = list_item.downcast_ref::<gtk::ListItem>().unwrap();
             let label = Label::new(None);
             list_item.set_child(Some(&label));
         });
@@ -406,7 +413,10 @@ fn create_view<Item, Model, RowData, ViewMode>(
             Ok(())
         };
 
-        factory.connect_bind(move |_, item| display_error(bind(item)));
+        factory.connect_bind(move |_, item: &Object| {
+            let item = item.downcast_ref::<gtk::ListItem>().unwrap();
+            display_error(bind(item));
+        });
 
         let timestamp_column =
             ColumnViewColumn::new(Some("Time"), Some(factory));
