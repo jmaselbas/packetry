@@ -620,26 +620,14 @@ fn choose_file<F>(
 {
     use FileAction::*;
     with_ui(|ui| {
-        let chooser = match action {
-            Load => gtk::FileChooserDialog::new(
-                Some(&format!("Open {description}")),
-                Some(&ui.window),
-                gtk::FileChooserAction::Open,
-                &[("Open", gtk::ResponseType::Accept)]
-            ),
-            Save => gtk::FileChooserDialog::new(
-                Some(&format!("Save {description}")),
-                Some(&ui.window),
-                gtk::FileChooserAction::Save,
-                &[("Save", gtk::ResponseType::Accept)]
-            ),
-        };
-        let _ = chooser.set_current_folder(
+        let dialog = gtk::FileDialog::new();
+        dialog.set_initial_folder(
             ui.settings.last_used_directory
-                .as_ref()
-                .map(gio::File::for_path)
-                .as_ref()
+            .as_ref()
+            .map(gio::File::for_path)
+            .as_ref()
         );
+        let filter_list = gio::ListStore::new::<gtk::FileFilter>();
         match extension {
             "pcapng" => {
                 let all = gtk::FileFilter::new();
@@ -652,9 +640,9 @@ fn choose_file<F>(
                 all.set_name(Some("All captures (*.pcap, *.pcapng)"));
                 pcap.set_name(Some("pcap (*.pcap)"));
                 pcapng.set_name(Some("pcap-NG (*.pcapng)"));
-                chooser.add_filter(&all);
-                chooser.add_filter(&pcap);
-                chooser.add_filter(&pcapng);
+                filter_list.append(&all);
+                filter_list.append(&pcap);
+                filter_list.append(&pcapng);
             },
             "bin" => {
                 let bin = gtk::FileFilter::new();
@@ -663,8 +651,8 @@ fn choose_file<F>(
                 all.add_pattern("*");
                 bin.set_name(Some("Binary files (*.bin)"));
                 all.set_name(Some("All files (*)"));
-                chooser.add_filter(&bin);
-                chooser.add_filter(&all);
+                filter_list.append(&bin);
+                filter_list.append(&all);
             },
             "zip" => {
                 let zip = gtk::FileFilter::new();
@@ -673,55 +661,36 @@ fn choose_file<F>(
                 all.add_pattern("*");
                 zip.set_name(Some("Zip files (*.zip)"));
                 all.set_name(Some("All files (*)"));
-                chooser.add_filter(&zip);
-                chooser.add_filter(&all);
+                filter_list.append(&zip);
+                filter_list.append(&all);
             }
             _ => bail!("Filters not defined for extension '.{extension}'")
         }
-        chooser.connect_response(move |dialog, response| {
-            let _ = with_ui(|ui| {
-                ui.settings.last_used_directory = dialog
-                    .current_folder()
-                    .and_then(|file| file.path());
-                Ok(())
-            });
-            if response == gtk::ResponseType::Accept {
-                if let Some(file) = dialog.file() {
-                    if let Some(name) = file.basename() {
-                        if action == Save && name.extension().is_none() {
-                            // Automatically add the extension.
-                            let name = name.with_extension(extension);
-                            let file = match file.parent() {
-                                Some(parent) => parent.child(&name),
-                                None => gio::File::for_path(&name),
-                            };
-                            // Check whether the new filename already exists.
-                            if file.query_exists(Cancellable::NONE) {
-                                // The file already exists.
-                                // Set the new filename in the dialog.
-                                let _ = dialog.set_file(&file);
-                                // Re-emit the response signal, so that the
-                                // dialog will show its usual warning message
-                                // about an existing file.
-                                dialog.response(response);
-                                // Return without closing the dialog.
-                                return
-                            } else {
-                                // The file doesn't exist. Proceed normally, but
-                                // with the amended destination file.
-                                display_error(handler(file));
-                                // Return after closing the dialog.
-                                dialog.destroy();
-                                return
-                            }
-                        }
-                    }
-                    display_error(handler(file));
-                }
-                dialog.destroy();
+        dialog.set_filters(Some(&filter_list));
+        let resp = move |file: Result<gio::File, glib::Error>| {
+            if let Ok(file) = file {
+                if let Some(dir) = file.parent() {
+                    let _ = with_ui(|ui| {
+                        ui.settings.last_used_directory = dir.path();
+                        Ok(())
+                    });
+                };
+                display_error(handler(file));
             }
-        });
-        chooser.show();
+        };
+        match action {
+            Load => {
+                dialog.set_title(format!("Open {description}").as_str());
+                dialog.open(Some(&ui.window), Cancellable::NONE, resp);
+            },
+            Save => {
+                // set a default name with the proper extension
+                let name = format!("capture.{extension}");
+                dialog.set_initial_name(Some(name.as_str()));
+                dialog.set_title(format!("Save {description}").as_str());
+                dialog.save(Some(&ui.window), Cancellable::NONE, resp);
+            },
+        }
         Ok(())
     })
 }
