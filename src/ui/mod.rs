@@ -218,7 +218,7 @@ pub fn activate(application: &Application) -> Result<(), Error> {
     ui.selector.connect_signals(|| display_error(device_selection_changed()));
 
     #[cfg(not(test))]
-    ui.window.show();
+    ui.window.set_visible(true);
 
     UI.with(|cell| {
         cell.borrow_mut().replace(ui);
@@ -1601,7 +1601,7 @@ fn display_problem<P: Problem>(result: Result<(), P>) {
                         dialog.set_modal(true);
                         dialog.connect_response(
                             move |dialog, _| dialog.destroy());
-                        dialog.show();
+                        dialog.set_visible(true);
                     }
                 }
             });

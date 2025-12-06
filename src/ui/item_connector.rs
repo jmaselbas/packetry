@@ -126,7 +126,7 @@ mod imp {
             let cw = (h / 2.0).trunc(); // char-cell width
             let c2 = (cw / 2.0).trunc();
             let sw = 1.0; // stroke width
-            let col = widget.style_context().color(); // NOTE: deprecated in 4.10, to be replace with widget.color()
+            let col = widget.color();
             let mut x: f32 = 0.0;
             for s in self.shape_list.borrow().deref() {
                 match s {
