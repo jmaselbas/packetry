@@ -259,7 +259,7 @@ mod imp {
         CheckButton,
         CompositeTemplate,
         DropDown,
-        InfoBar,
+        Revealer,
         Label,
         MenuButton,
         Paned,
@@ -291,7 +291,7 @@ mod imp {
         #[template_child]
         pub menu_button: TemplateChild<MenuButton>,
         #[template_child]
-        pub info_bar: TemplateChild<InfoBar>,
+        pub info_bar: TemplateChild<Revealer>,
         #[template_child]
         pub info_label: TemplateChild<Label>,
         #[template_child]

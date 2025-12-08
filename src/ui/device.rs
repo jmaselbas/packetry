@@ -10,7 +10,7 @@ use gtk::{
     ClosureExpression,
     DropDown,
     Expression,
-    InfoBar,
+    Revealer,
     Label,
     MessageType,
     ResponseType,
@@ -162,17 +162,17 @@ impl DeviceSelector {
 }
 
 pub struct DeviceWarning {
-    info_bar: InfoBar,
+    info_bar: Revealer,
     label: Label,
 }
 
 impl DeviceWarning {
-    pub fn new(info_bar: InfoBar, label: Label) -> DeviceWarning {
-        info_bar.connect_response(|info_bar, response| {
-            if response == ResponseType::Close {
-                info_bar.set_revealed(false);
-            }
-        });
+    pub fn new(info_bar: Revealer, label: Label) -> DeviceWarning {
+//        info_bar.connect_response(|info_bar, response| {
+//            if response == ResponseType::Close {
+//                info_bar.set_reveal_child(false);
+//            }
+//        });
         DeviceWarning {
             info_bar,
             label,
@@ -181,12 +181,13 @@ impl DeviceWarning {
 
     pub fn update(&self, warning: Option<String>) {
         if let Some(reason) = warning {
-            self.info_bar.set_message_type(MessageType::Warning);
+//            self.info_bar.set_message_type(MessageType::Warning);
+            self.info_bar.add_css_class("warning");
             self.label.set_text(&format!(
                 "This device is not usable because: {reason}"));
-            self.info_bar.set_revealed(true);
+            self.info_bar.set_reveal_child(true);
         } else {
-            self.info_bar.set_revealed(false);
+            self.info_bar.set_reveal_child(false);
         }
     }
 }

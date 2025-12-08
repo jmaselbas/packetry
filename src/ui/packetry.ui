@@ -144,12 +144,16 @@ CONTROL</property>
           <object class="GtkSeparator"/>
         </child>
         <child>
-          <object class="GtkInfoBar" id="info_bar">
-            <property name="revealed">False</property>
-            <property name="show-close-button">True</property>
+          <object class="GtkRevealer" id="info_bar">
+            <property name="child-revealed">False</property>
+<!--            <property name="show-close-button">True</property> -->
             <child>
-              <object class="GtkLabel" id="info_label">
-                <property name="wrap">True</property>
+              <object class="GtkBox">
+                <child>
+                  <object class="GtkLabel" id="info_label">
+                    <property name="wrap">True</property>
+                  </object>
+                </child>
               </object>
             </child>
           </object>
