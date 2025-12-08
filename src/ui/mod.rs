@@ -298,6 +298,7 @@ fn create_view<Item, Model, RowData, ViewMode>(
                 let connectors = model.connectors(view_mode, &item);
                 item_widget.set_text(summary);
                 item_widget.set_connectors(connectors);
+                expander.set_valign(Align::Center);
                 expander.set_visible(node.expandable());
                 expander.set_expanded(node.expanded());
                 #[cfg(any(test,
